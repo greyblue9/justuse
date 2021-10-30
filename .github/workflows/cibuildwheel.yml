@@ -1,7 +1,7 @@
 
-name: CI Build Wheels
+name: Build Package
 
-on: [push, pull_request]
+on: [push, pull_request, release]
 
 jobs:
   build_wheels:
@@ -9,14 +9,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+        # os: [ubuntu-20.04, windows-2019, macOS-10.15]
+        os: [ubuntu-20.04]
 
     steps:
       - uses: actions/checkout@v2
-
-      # Used to host cibuildwheel
       - uses: actions/setup-python@v2
-
       - name: Install cibuildwheel
         continue-on-error: true
         run: |
@@ -26,13 +24,12 @@ jobs:
           python -m pip install -r requirements.txt cibuildwheel
           python -m pip install -r requirements.txt cibuildwheel
 
-      - name: Build wheels
+      - name: Build wheels - cpp39
         run: python -m cibuildwheel --output-dir wheelhouse .
-        continue-on-error: true
         env:
           CIBW_AFTER_BUILD: python -m pip install -r ${{ runner.workspace }}/requirements.txt cibuildwheel
-          CIBW_TEST_COMMAND: true
-          CIBW_TEST_REQUIRES: pytest pytest-env
+          CIBW_TEST_COMMAND: python -c 'import os, pathlib, sys, use; sys.path.insert(1, str(pathlib.Path(use.__file__).parent.parent.parent)); import justuse.unit_test, justuse.tdd_test; sys.argv.extend(["-m", "", "justuse/unit_test.py", "justuse/tdd_test.py"]); import pytest; pytest.main()'
+          CIBW_TEST_REQUIRES: pytest pytest-env requests packaging==21.0 pydantic pip==21.2.1 furl wheel icontract beartype
           CIBW_BUILD_VERBOSITY: -vvv
           CIBW_PACKAGE: justuse
           CIBW_PROJECT_ROOT: ${{ runner.workspace }}
@@ -42,22 +39,7 @@ jobs:
           CIBW_BUILDDIR: ${{ runner.workspace }}
           CIBW_BUILD_DIR: ${{ runner.workspace }}
           CIBW_BUILD: cp39-*
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse .
-        continue-on-error: true
-        env:
-          CIBW_AFTER_BUILD: python -m pip install -r ${{ runner.workspace }}/requirements.txt cibuildwheel
-          CIBW_TEST_COMMAND: true
-          CIBW_TEST_REQUIRES: pytest pytest-env
-          CIBW_BUILD_VERBOSITY: -vvv
-          CIBW_PACKAGE: justuse
-          CIBW_PROJECT_ROOT: ${{ runner.workspace }}
-          CIBW_ROOT: ${{ runner.workspace }}
-          CIBW_PROJECT_DIT: ${{ runner.workspace }}
-          CIBW_DIR: ${{ runner.workspace }}
-          CIBW_BUILDDIR: ${{ runner.workspace }}
-          CIBW_BUILD_DIR: ${{ runner.workspace }}
-          CIBW_BUILD: cp310-*
+
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl

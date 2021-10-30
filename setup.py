@@ -21,21 +21,6 @@ src = os.path.join(here, "src/use")
 #
 
 
-dummy_name = "dummy"
-dummy_path = os.path.join(src, f"{dummy_name}.c")
-with open(dummy_path, "w") as f:
-    f.write(f"extern int PyInit_{dummy_name}() {{ return 0; }}")
-dummy = Extension(
-    dummy_name,
-    define_macros = [],
-    include_dirs = [],
-    libraries = [],
-    library_dirs = [],
-    sources = [dummy_path]
-)
-
-
-
 with open(os.path.join(src, "__init__.py")) as f:
     mod = ast.parse(f.read())
     version = [t for t in [*filter(lambda n: isinstance(n, ast.Assign), mod.body)] if t.targets[0].id == "__version__"][0]
@@ -44,6 +29,8 @@ with open(os.path.join(src, "__init__.py")) as f:
             version = version.value
         if isinstance(version, ast.Str):
             version = version.s
+with open(about_path := (os.path.join(src, "about.c")), "w") as f:
+    f.write("extern int PyInit_about() {}")
 
 meta = {
     "name": "justuse",
@@ -72,13 +59,19 @@ meta = {
     ],
     "extras_require": {"test": ["pytest", "pytest-cov", "pytest-env"]},
     "fullname": "justuse",
-    "dist_files": ["pytest.ini", "tests/pytest.ini"],
+    "dist_files": [],
     "description": "a pure-python alternative to import",
     "maintainer_email": "justuse-pypi@anselm.kiefner.de",
     "maintainer": "Anselm Kiefner",
     "platforms": ["any"],
     "download_url": "https://github.com/amogorkon/justuse/" "archive/refs/heads/main.zip",
-    "ext_modules": [dummy],
+    "ext_modules": [
+        Extension(
+            "about",
+            [str(about_path)],
+            optional=False,
+        ),
+    ],
 }
 
 
@@ -86,11 +79,11 @@ requires = (
     "requests(>= 2.24.0)",
     "packaging(== 21.0)",
     "pydantic(>= 1.8.2)",
-    "typeguard(>= 2.12.1)",
     "pip(== 21.2.1)",
     "furl(>= 2.1.2)",
     "wheel(>= 0.36.2)",
     "icontract(>= 2.5.4)",
+    "beartype(>= 0.0.0)",
 )
 
 
@@ -98,8 +91,11 @@ with open("README.md") as f:
     LONG_DESCRIPTION = f.read()
 
 setup(
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=[
+      *find_packages(where="src"),
+      "justuse",
+    ],
+    package_dir={"": "src", "justuse": "tests"},
     package_name="use",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
@@ -107,5 +103,6 @@ setup(
     install_requires=requires,
     setup_requires=requires,
     zip_safe=True,
-    **meta
+    **meta,
 )
+

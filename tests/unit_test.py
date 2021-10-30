@@ -22,7 +22,7 @@ from furl import furl as URL
 
 src = import_base = Path(__file__).parent.parent / "src"
 cwd = Path().cwd()
-os.chdir(src)
+if src.exists(): os.chdir(src)
 sys.path.insert(0, "") if "" not in sys.path else None
 import use
 from use import PyPI_Release, Version
@@ -32,8 +32,6 @@ os.chdir(cwd)
 
 is_win = sys.platform.startswith("win")
 
-__package__ = "tests"
-
 import logging
 
 log = logging.getLogger(".".join((__package__, __name__)))
@@ -42,7 +40,7 @@ log.setLevel(logging.DEBUG if "DEBUG" in os.environ else logging.NOTSET)
 use.config["testing"] = True
 
 # this is actually a test!
-from tests.simple_funcs import three
+from .simple_funcs import three
 
 
 @pytest.fixture()
