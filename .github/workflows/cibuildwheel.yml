@@ -7,7 +7,7 @@ jobs:
     name: Build wheels on ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         config:
           - name: "win32-x86"
@@ -57,6 +57,7 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.2.2
+        continue-on-error: true
         env:
           CIBW_BUILD_VERBOSITY: 3
           # hope that only the one corresponding to the current arch applies
@@ -66,4 +67,4 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl
+          path: ./wheelhouse/*.whl ./**/*.whl ./dist/** ./build/**.whl  ./wheelhouse/*.egg  ./**/*.egg  ./dists/** ./build/**.egg ./wheelhouse/*.tar* ./wheelhouse/*.msi ./wheelhouse/*.exe ./wheelhouse/*.dmg ./wheelhouse/*.rpm ./wheelhouse/*.deb  ./**/*.tar* ./build/**.tar*
